@@ -1,5 +1,14 @@
 # SQL Threat Hunting Lab: Authentication Anomaly Investigation
 
+<p align="center">
+  <img src="https://img.shields.io/badge/Threat%20Hunting-SQL--Driven-2563EB?style=for-the-badge&logo=databricks&logoColor=white" />
+  <img src="https://img.shields.io/badge/SOC-Investigation%20Workflow-F59E0B?style=for-the-badge&logo=elastic&logoColor=white" />
+  <img src="https://img.shields.io/badge/Detection-Behavioral%20Logic-7C3AED?style=for-the-badge&logo=apachekafka&logoColor=white" />
+  <img src="https://img.shields.io/badge/Triage-Risk%20Prioritization-DC2626?style=for-the-badge&logo=opsgenie&logoColor=white" />
+  <img src="https://img.shields.io/badge/Data%20Integrity-Pre--Action%20Validated-16A34A?style=for-the-badge&logo=checkmarx&logoColor=white" />
+  <img src="https://img.shields.io/badge/Execution-SOC--Ready%20Outputs-0A66C2?style=for-the-badge&logo=splunk&logoColor=white" />
+</p>
+
 **Portfolio Artifact** | Enterprise Security Analysis | January 2025
 
 ---
