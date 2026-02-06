@@ -375,4 +375,4 @@ soc-portfolio/
 
 ## Development
 
-This project was built with AI-assisted drafting and scaffolding to accelerate iteration. All code was reviewed, tested, and modified by hand. Final logic, signal weights, safety gates, and architectural decisions are deterministic and human-owned.
+This project was built with AI-assisted development. All queries were tested against the dataset and output verified. Detection logic and investigation methodology were studied and understood before publication.
