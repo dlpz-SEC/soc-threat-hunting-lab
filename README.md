@@ -367,7 +367,12 @@ soc-portfolio/
 - No network flow data (can't assess exfiltration)
 - Synthetic data (real environments have more noise)
 
+
 **What I would add with more data:**
 - VPN connection logs (resolve impossible travel false positives)
 - Process creation logs (detect post-compromise activity)
 - Email logs (correlate phishing with credential compromise)
+
+## Development
+
+This project was built with AI-assisted drafting and scaffolding to accelerate iteration. All code was reviewed, tested, and modified by hand. Final logic, signal weights, safety gates, and architectural decisions are deterministic and human-owned.
