@@ -344,16 +344,20 @@ This can be scheduled as a saved search with alert action for SOC notification.
 ## Files in This Repository
 
 ```
-soc-portfolio/
-├── EXECUTIVE_SUMMARY.md     # 1-page findings summary
-├── README.md                # This document
+soc-threat-hunting-lab/
+├── EXECUTIVE_SUMMARY.md   # 1-page findings summary
+├── README.md              # This document
+├── run_detection.sh       # Shell script to run detections
+├── .gitattributes
 ├── data/
-│   ├── setup_database.sql   # Schema + synthetic data
-│   └── security.db          # SQLite database
+│   ├── setup_database.sql # Schema + synthetic data
+│   └── security.db        # SQLite database
 ├── sql/
 │   └── detection_queries.sql # All detection views
+├── results/
+│   └── ...                # Query output / evidence
 └── docs/
-    └── field_dictionary.md  # Data dictionary
+    └── field_dictionary.md # Data dictionary
 ```
 
 ---
