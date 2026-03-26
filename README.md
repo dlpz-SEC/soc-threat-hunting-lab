@@ -380,3 +380,9 @@ soc-threat-hunting-lab/
 ## Development
 
 This project was built with AI-assisted development. All queries were tested against the dataset and output verified. Detection logic and investigation methodology were studied and understood before publication.
+
+
+## License
+
+MIT
+
