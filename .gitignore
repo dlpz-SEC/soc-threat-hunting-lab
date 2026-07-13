@@ -1,0 +1,14 @@
+# Generated artifacts
+data/security.db
+output/
+
+# Python
+__pycache__/
+.pytest_cache/
+*.pyc
+.venv/
+venv/
+
+# Local tooling state
+.claude/settings.local.json
+.claude/worktrees/

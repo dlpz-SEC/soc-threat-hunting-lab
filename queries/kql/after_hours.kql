@@ -1,0 +1,17 @@
+// [Auth] - After-Hours Login vs Personal Baseline — MITRE T1078
+// Login outside the user's own learned hour window (baseline min/max +/- 2h),
+// not a hardcoded shift. Stateful (per-user baseline) — a hunt query.
+let split = ago(2d);          // reason: baseline before, detection after
+SigninLogs
+| where TimeGenerated > ago(7d) and ResultType == 0
+| where UserPrincipalName !startswith "svc_"
+| extend hour = hourofday(TimeGenerated),
+         phase = iff(TimeGenerated < split, "baseline", "detect")
+| summarize min_h = minif(hour, phase == "baseline"),
+            max_h = maxif(hour, phase == "baseline"),
+            detects = make_list_if(pack("t", TimeGenerated, "h", hour), phase == "detect")
+        by username = UserPrincipalName
+| mv-expand d = detects
+| extend t = todatetime(d.t), h = toint(d.h)
+| where h < (min_h - 2) or h > (max_h + 2)
+| project username, t, h, min_h, max_h

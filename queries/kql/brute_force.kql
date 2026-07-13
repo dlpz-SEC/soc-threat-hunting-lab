@@ -1,0 +1,13 @@
+// [Auth] - Brute Force Failures Followed by Success — MITRE T1110.001
+// Failures then a success from the same source within an hour, per user.
+// row_cumsum resets the failure counter after each success, approximating the
+// SQL NOT EXISTS intervening-success check.
+SigninLogs
+| where TimeGenerated > ago(7d)
+| project TimeGenerated, username = UserPrincipalName, src_ip = IPAddress,
+          success = iff(ResultType == 0, 1, 0)
+| order by username asc, TimeGenerated asc
+| serialize
+| extend failures_since_success = row_cumsum(iff(success == 0, 1, 0), success == 1)
+| where success == 1 and failures_since_success >= 5
+| project TimeGenerated, username, src_ip, failures_since_success

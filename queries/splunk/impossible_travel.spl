@@ -1,0 +1,13 @@
+``` [Auth] - Impossible Travel — MITRE T1078
+    Consecutive successful logins from different countries whose required
+    velocity exceeds ~900 km/h (commercial cruise). Uses a country-centroid
+    distance lookup; velocity-gated, not just "different country in N hours".
+    Stateful (needs the prior login per user) — a hunting query. ```
+index=auth sourcetype=login_events success=1
+| sort 0 username _time
+| streamstats current=f last(country) AS prev_country last(_time) AS prev_time BY username
+| where isnotnull(prev_country) AND country!=prev_country
+| lookup country_distance country_a AS prev_country country_b AS country OUTPUT distance_km
+| eval hours=(_time-prev_time)/3600, required_kmh=round(distance_km/hours,0)
+| where required_kmh>900
+| table _time, username, prev_country, country, hours, required_kmh

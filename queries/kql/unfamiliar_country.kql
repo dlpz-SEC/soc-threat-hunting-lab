@@ -1,0 +1,15 @@
+// [Auth] - Unfamiliar Country Login — MITRE T1078
+// Successful login from a country outside the user's prior-week baseline.
+// Stateful (per-user history) — a hunt, not a stateless Sigma selection.
+let lookback = 7d;
+let split = ago(2d);          // reason: baseline before, detection after
+SigninLogs
+| where TimeGenerated > ago(lookback) and ResultType == 0
+| extend phase = iff(TimeGenerated < split, "baseline", "detect")
+| summarize baseline = make_set_if(Location, phase == "baseline"),
+            arg_max(iff(phase == "detect", TimeGenerated, datetime(null)), IPAddress, Location)
+        by username = UserPrincipalName
+| mv-expand detect_country = Location to typeof(string)
+| where isnotempty(detect_country) and detect_country !in (baseline)
+| extend severity = iff(detect_country in ("RU", "CN", "KP", "IR"), "HIGH", "MEDIUM")
+| project username, detect_country, baseline, IPAddress, severity

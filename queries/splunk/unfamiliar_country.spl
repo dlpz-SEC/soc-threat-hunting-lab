@@ -1,0 +1,11 @@
+``` [Auth] - Unfamiliar Country Login — MITRE T1078
+    Successful login from a country not in the user's pre-window baseline.
+    Baseline built from the first week; detection runs after. High-risk
+    countries escalate. Stateful (per-user history) — a hunting query, not a
+    stateless Sigma selection. ```
+index=auth sourcetype=login_events success=1 earliest=-7d
+| eval phase=if(_time<relative_time(now(),"-0d@d-7d"),"baseline","detect")
+| eventstats values(eval(if(phase="baseline",country,null()))) AS baseline_countries BY username
+| where phase="detect" AND NOT country IN (baseline_countries)
+| eval severity=if(country IN ("RU","CN","KP","IR"),"HIGH","MEDIUM")
+| table _time, username, country, baseline_countries, src_ip, severity

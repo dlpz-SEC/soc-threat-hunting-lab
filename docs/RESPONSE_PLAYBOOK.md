@@ -1,24 +1,31 @@
 # Incident Response Playbook: Authentication Anomalies
 
-**Version:** 1.0 | **Last Updated:** January 2025 | **Owner:** SOC Team
+**Version:** 2.0 | **Owner:** SOC Team
+
+> **Date convention:** verification queries below use
+> `(SELECT value FROM hunt_config WHERE key = 'asof_date')` for the hunt's
+> "now", matching the detection views. In a live SOC, substitute `date('now')`
+> or your SIEM's time-range picker. The lab pins the as-of date so results are
+> reproducible.
 
 ---
 
 ## Playbook Index
 
-| Playbook ID | Trigger Condition | SLA |
-|-------------|-------------------|-----|
-| AUTH-001 | Terminated account activity | 15 min |
-| AUTH-002 | Brute force success | 30 min |
-| AUTH-003 | Impossible travel | 1 hour |
-| AUTH-004 | Unfamiliar country login | 2 hours |
-| AUTH-005 | Password spray (failed) | 4 hours |
+| Playbook ID | Trigger Condition | ATT&CK | SLA |
+|-------------|-------------------|--------|-----|
+| AUTH-001 | Terminated account activity | T1078.002 | 15 min |
+| AUTH-002 | Brute force success | T1110.001 | 30 min |
+| AUTH-003 | Impossible travel | T1078 | 1 hour |
+| AUTH-004 | Unfamiliar country login | T1078 | 2 hours |
+| AUTH-005 | Password spray (one source, many accounts) | T1110.003 | 4 hours |
+| AUTH-006 | Failed brute force (one account, no success) | T1110.001 | 4 hours |
 
 ---
 
 ## AUTH-001: Terminated Account Activity
 
-**Severity:** CRITICAL  
+**Severity:** CRITICAL | **ATT&CK:** T1078.002 (Valid Accounts: Domain Accounts)
 **SLA:** 15 minutes to containment
 
 ### Trigger
@@ -74,11 +81,13 @@ Any authentication event (success OR failure) on an account with status = 'Termi
 
 ## AUTH-002: Brute Force Success
 
-**Severity:** HIGH  
+**Severity:** HIGH | **ATT&CK:** T1110.001 (Brute Force: Password Guessing)
 **SLA:** 30 minutes to containment
 
 ### Trigger
-5+ failed login attempts followed by success within 60 minutes for same username
+5+ *uninterrupted* failed login attempts followed by success within 60 minutes
+for the same username (detection: `v_detect_brute_force`, which enforces the
+no-intervening-success condition).
 
 ### Immediate Actions (0-30 min)
 
@@ -104,11 +113,11 @@ Any authentication event (success OR failure) on an account with status = 'Termi
 ### Verification Script
 ```sql
 -- Confirm brute force pattern
-SELECT 
+SELECT
     login_date, login_time, success, source_ip
 FROM log_in_attempts
 WHERE username = '<TARGET_USER>'
-  AND login_date >= date('now', '-1 day')
+  AND login_date >= (SELECT value FROM hunt_config WHERE key = 'detection_start')
 ORDER BY login_date, login_time;
 ```
 
@@ -135,11 +144,15 @@ ORDER BY login_date, login_time;
 
 ## AUTH-003: Impossible Travel
 
-**Severity:** HIGH  
+**Severity:** HIGH | **ATT&CK:** T1078 (Valid Accounts)
 **SLA:** 1 hour to triage
 
 ### Trigger
-Same user with successful logins from two countries where travel time < 12 hours and distance > 500km
+Consecutive successful logins from two countries whose **required velocity
+exceeds 900 km/h** (`v_detect_impossible_travel`). The detection exposes
+`required_kmh` per case, so triage starts from a number, not a hunch. Pairs in
+`travel_exceptions` (e.g. the US↔CA corridor) arrive pre-downgraded to MEDIUM
+with a rationale — they are surfaced, never silently suppressed.
 
 ### Triage Decision Tree
 
@@ -184,40 +197,50 @@ Same user with successful logins from two countries where travel time < 12 hours
   - Any data downloaded?
 ```
 
-### VPN False Positive Check
+### Source enrichment check
 ```sql
--- Check if both IPs are known VPN exit nodes
-SELECT 
+-- Classify both source IPs against the static intel table (ip_enrichment).
+-- Replaces the earlier reference to a vpn_exit_nodes table that never existed
+-- in the schema.
+SELECT
     l.source_ip,
     l.country,
-    CASE 
+    CASE
         WHEN l.source_ip LIKE '10.%' THEN 'INTERNAL'
-        WHEN l.source_ip IN (SELECT ip FROM vpn_exit_nodes) THEN 'VPN'
-        ELSE 'EXTERNAL'
-    END AS ip_type
+        WHEN ie.tags IS NOT NULL THEN ie.tags     -- e.g. tor-exit, scanner, c2
+        ELSE 'EXTERNAL (no intel match)'
+    END AS ip_classification,
+    ie.source AS intel_source, ie.confidence
 FROM log_in_attempts l
+LEFT JOIN ip_enrichment ie ON l.source_ip LIKE ie.ip_prefix || '%'
 WHERE l.username = '<TARGET_USER>'
   AND l.login_date = '<INCIDENT_DATE>';
 ```
+A Tor/scanner/c2 tag on either leg strengthens the compromise case; an
+unenriched external IP is not exonerating (feeds are incomplete — E016's RU
+source is a real example of a gap).
 
 ---
 
 ## AUTH-004: Unfamiliar Country Login
 
-**Severity:** MEDIUM-HIGH (context dependent)  
+**Severity:** MEDIUM-HIGH (context dependent) | **ATT&CK:** T1078 (Valid Accounts)
 **SLA:** 2 hours to triage
 
 ### Trigger
-Successful login from country not in user's 30-day baseline
+Successful login from a country not in the user's baseline
+(`v_detect_unfamiliar_country`). Accounts with **no** baseline (new/dormant)
+fire a separate, lower-confidence branch — treat those as "verify the account
+came back online", not "compromise".
 
 ### Severity Adjustment
 
-| Factor | Adjustment |
-|--------|------------|
-| User is admin/privileged | Upgrade to HIGH |
-| Country is high-risk (RU, CN, KP, IR) | Upgrade to HIGH |
-| Login time is user's business hours | Downgrade to MEDIUM |
-| User department is Travel/Sales | Downgrade to MEDIUM |
+| Factor | Adjustment | Implemented in view? |
+|--------|------------|----------------------|
+| Country is high-risk (RU, CN, KP, IR) | Upgrade to HIGH | **Yes** — the view emits HIGH for these |
+| User is admin/privileged | Upgrade to HIGH | No — analyst judgment (no privilege field in the dataset) |
+| Login time is user's business hours | Downgrade to MEDIUM | No — analyst judgment; cross-check AUTH-003/after-hours |
+| User department is Travel/Sales | Downgrade to MEDIUM | No — analyst judgment |
 
 ### Triage Steps
 
@@ -237,48 +260,67 @@ Successful login from country not in user's 30-day baseline
 
 ---
 
-## AUTH-005: Password Spray (No Success)
+## AUTH-005: Password Spray (One Source, Many Accounts)
 
-**Severity:** MEDIUM  
+**Severity:** MEDIUM (HIGH if any success) | **ATT&CK:** T1110.003 (Password Spraying)
 **SLA:** 4 hours to investigate
 
 ### Trigger
-10+ failed login attempts for a single account within 24 hours, no success
+One source IP fails against **≥ 5 distinct accounts** in a day
+(`v_detect_password_spray`). This is the defining shape of a spray — breadth,
+not depth. The per-source grouping below is the **primary detection**, not a
+follow-up correlation (the previous version keyed on a single account, which
+could never see a spray at all).
 
 ### Actions
 
 ```
-□ STEP 1: Monitor account (no immediate lockout)
-  - Add to watchlist
-  - Alert on any success in next 72h
+□ STEP 1: Enrich and block the source
+  - Classify source_ip against ip_enrichment (scanner/c2/tor-exit)
+  - Block at perimeter if confirmed hostile (24h, then review)
 
-□ STEP 2: Analyze attack pattern
-  - Single IP or distributed?
-  - Targeting one account or many?
-  - Time pattern suggests automation?
+□ STEP 2: Check for ANY success from the source
+  - A single success amid a spray = live compromise -> escalate to AUTH-002
+  - Query: SELECT * FROM v_detect_password_spray WHERE successes > 0;
 
-□ STEP 3: Consider proactive reset
-  - If password is known weak: Force reset
-  - If MFA not enabled: Enroll user
+□ STEP 3: Scope the target set
+  - List every account the source touched (usernames column)
+  - Proactively reset any that lack MFA
 
-□ STEP 4: Correlate with other accounts
-  - Same source IP targeting others?
-  - Part of spray campaign?
+□ STEP 4: Hunt for the same source on other days / other IPs in the range
 ```
 
-### Query: Identify Spray Campaign
+### Query: Spray campaigns (this is the detection view)
 ```sql
--- Find if multiple accounts targeted from same IP
-SELECT 
-    source_ip,
-    COUNT(DISTINCT username) AS accounts_targeted,
-    SUM(CASE WHEN success = 0 THEN 1 ELSE 0 END) AS total_failures,
-    SUM(CASE WHEN success = 1 THEN 1 ELSE 0 END) AS total_successes
-FROM log_in_attempts
-WHERE login_date >= date('now', '-1 day')
-GROUP BY source_ip
-HAVING COUNT(DISTINCT username) > 3 AND total_failures > 10
+SELECT source_ip, login_date, accounts_targeted, total_failures, successes, usernames
+FROM v_detect_password_spray
 ORDER BY accounts_targeted DESC;
+```
+
+---
+
+## AUTH-006: Failed Brute Force (One Account, No Success)
+
+**Severity:** MEDIUM | **ATT&CK:** T1110.001 (Brute Force: Password Guessing)
+**SLA:** 4 hours to investigate
+
+### Trigger
+≥ 10 failed attempts against a **single** account from a single source in a day,
+with **no success** (`v_detect_bruteforce_failed`). This is brute force that did
+not land — distinct from AUTH-002 (which succeeded) and AUTH-005 (many accounts).
+
+### Actions
+
+```
+□ STEP 1: Confirm no success slipped through
+  - Query v_detect_bruteforce_failed excludes any source that also succeeded;
+    double-check the account's full day of activity
+
+□ STEP 2: Assess password strength / MFA
+  - If the password is weak or MFA is absent, proactively reset/enroll
+
+□ STEP 3: Enrich and monitor the source
+  - Classify source_ip; watchlist the account for 72h for a delayed success
 ```
 
 ---

@@ -1,0 +1,10 @@
+``` [Auth] - Failed Brute Force (single account, no success) — MITRE T1110.001
+    Many failures against ONE account from ONE source with no success — brute
+    force that never landed. Distinct from spray (many accounts) and from the
+    success case. ```
+index=auth sourcetype=login_events
+| bucket _time span=1d
+| stats count(eval(success=0)) AS failures, count(eval(success=1)) AS successes
+    BY username, src_ip, _time
+| where failures>=10 AND successes=0
+| sort - failures

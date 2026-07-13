@@ -1,0 +1,12 @@
+``` [Auth] - Brute Force Failures Followed by Success — MITRE T1110.001
+    Failures then a success from the same source within an hour. The
+    transaction/streamstats pattern approximates the SQL NOT EXISTS
+    intervening-success check: a success closes the burst. ```
+index=auth sourcetype=login_events
+| sort 0 username _time
+| streamstats count(eval(success=0)) AS failures_since_success
+    reset_after="(success=1)" BY username
+| where success=1 AND failures_since_success>=5
+| eval time_window_minutes=round((_time-first_failure)/60,1)
+| table _time, username, src_ip, failures_since_success
+| sort - failures_since_success

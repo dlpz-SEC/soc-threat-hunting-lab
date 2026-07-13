@@ -1,0 +1,10 @@
+``` [Auth] - Terminated Account Authentication — MITRE T1078.002
+    Any auth activity on a non-Active account. Requires the account_status
+    enrichment lookup (join to the identity directory) — raw auth logs do not
+    carry directory status. ```
+index=auth sourcetype=login_events
+| lookup identity_status employee_id AS username OUTPUT status AS account_status
+| where account_status!="Active"
+| eval severity=if(success=1,"CRITICAL","HIGH")
+| table _time, username, account_status, success, src_ip, country, severity
+| sort - success

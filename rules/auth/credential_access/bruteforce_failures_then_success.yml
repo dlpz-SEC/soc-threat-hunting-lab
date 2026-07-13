@@ -1,0 +1,77 @@
+# Sigma correlation rule (multi-document): a base rule matched by a
+# correlation. The base rule selects failed authentications; the correlation
+# fires when one account accumulates >= 5 failures within an hour.
+#
+# HONEST SCOPE: pure Sigma correlation expresses the "many failures" half of
+# "failures THEN success". The temporal ordering (failures strictly preceding
+# a success, with no success in between) is enforced downstream — by the SQL
+# view v_detect_brute_force here, or by a SIEM correlation search in
+# production. See docs/SIGMA_NOTES.md.
+title: '[Auth] - Repeated Authentication Failures (Brute Force)'
+id: 2a9c4e6f-1b3d-4f8a-9c2e-6d5b7a0f1c3e
+status: experimental
+description: |
+    Detects an account subjected to repeated authentication failures in a
+    short window — the failure burst that precedes a successful brute-force
+    login. Pair with a success check to confirm compromise (see tuning notes).
+references:
+    - https://attack.mitre.org/techniques/T1110/001/
+author: dlpz-SEC
+date: 2026/07/13
+tags:
+    - attack.credential_access
+    - attack.t1110
+    - attack.t1110.001
+logsource:
+    category: authentication
+    product: windows
+detection:
+    selection:
+        outcome: 'failure'
+    condition: selection
+falsepositives:
+    - A user repeatedly mistyping a password after a rotation.
+    - A stale credential in a service/script hammering the endpoint.
+level: high
+custom:
+    lifecycle: experimental
+    confidence: high
+    false_positive_rate: medium
+    investigation_steps: |
+        1. Confirm a subsequent SUCCESS from the same source within the window
+           — that promotes this from attempt to compromise.
+        2. Enrich the source IP (Tor/scanner/known-bad); the lab's E004 case
+           originates from a Tor exit range.
+        3. If compromised, force password reset and revoke sessions.
+    tuning_notes: |
+        The success-after-failures ordering is not expressible in base Sigma
+        correlation; enforce it in the backend (SQL v_detect_brute_force uses a
+        NOT EXISTS intervening-success check). Raise the count threshold in
+        noisy environments.
+    mitre_context:
+        technique: T1110.001
+        tactic: Credential Access
+        data_sources:
+            - Logon Session: Logon Session Creation
+        platforms:
+            - Windows
+    owner: dlpz-SEC
+    review_frequency: monthly
+    last_reviewed: 2026-07-13
+---
+title: '[Auth] - Brute Force Failure Burst Correlation'
+id: 5f8b1d3a-7c2e-4a9f-8b6d-0e4c2a1f9d7b
+status: experimental
+correlation:
+    type: event_count
+    rules:
+        - 2a9c4e6f-1b3d-4f8a-9c2e-6d5b7a0f1c3e
+    group-by:
+        - username
+    timespan: 1h
+    condition:
+        gte: 5
+tags:
+    - attack.credential_access
+    - attack.t1110
+    - attack.t1110.001

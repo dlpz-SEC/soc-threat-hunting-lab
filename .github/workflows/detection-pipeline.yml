@@ -1,0 +1,52 @@
+name: Detection Pipeline
+
+# Two gates on every push/PR to main:
+#   validate-rules — Sigma syntax + repo conventions (titles, MITRE tags, FPs)
+#   tests          — pytest regression suite + docs-freshness check
+# Right-sized for this repo (3 Sigma rules + a SQLite fixture); no convert
+# matrix or coverage commit-back like the larger detection-as-code pipeline.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHON_VERSION: '3.11'
+
+jobs:
+  validate-rules:
+    name: Validate Sigma rules
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Repo-convention lint
+        run: python scripts/validate_rules.py --rules-dir rules/ --strict
+      - name: Sigma syntax check
+        run: sigma check rules/
+
+  tests:
+    name: Tests + docs freshness
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Pytest (detection regression suite)
+        run: pytest -q
+      - name: Generated docs are current
+        run: python scripts/compute_metrics.py --check

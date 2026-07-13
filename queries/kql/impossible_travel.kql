@@ -1,0 +1,18 @@
+// [Auth] - Impossible Travel — MITRE T1078
+// Consecutive successful logins from different countries whose required
+// velocity exceeds ~900 km/h. Joins a country-centroid distance table.
+// Stateful (prev() per user) — a hunt query.
+let distances = externaldata(country_a: string, country_b: string, distance_km: long)
+    [@"https://example.invalid/country_distance.csv"] with (format = "csv");
+SigninLogs
+| where TimeGenerated > ago(7d) and ResultType == 0
+| order by UserPrincipalName asc, TimeGenerated asc
+| serialize
+| extend prev_country = prev(Location), prev_time = prev(TimeGenerated),
+         prev_user = prev(UserPrincipalName)
+| where UserPrincipalName == prev_user and Location != prev_country
+| extend a = tostring(min_of(Location, prev_country)), b = tostring(max_of(Location, prev_country))
+| join kind=inner (distances | project a = country_a, b = country_b, distance_km) on a, b
+| extend hours = (TimeGenerated - prev_time) / 1h, required_kmh = round(distance_km / hours, 0)
+| where required_kmh > 900
+| project TimeGenerated, UserPrincipalName, prev_country, Location, hours, required_kmh

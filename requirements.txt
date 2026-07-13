@@ -1,0 +1,4 @@
+# Both bounds on every dependency (reproducible installs, no surprise majors).
+pytest>=8.0,<10.0
+PyYAML>=6.0,<7.0
+sigma-cli>=1.0,<2.0

@@ -1,1 +1,4 @@
-*.html linguist-documentation
+# Force LF for all text so the generated-docs freshness check (--check) is
+# deterministic across Windows dev and Linux CI. The .db is a build artifact.
+* text=auto eol=lf
+*.db binary

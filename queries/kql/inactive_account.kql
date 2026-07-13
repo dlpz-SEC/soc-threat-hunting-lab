@@ -1,0 +1,14 @@
+// [Auth] - Terminated Account Authentication — MITRE T1078.002
+// Any auth on a non-Active account. Joins to an identity table for status —
+// raw SigninLogs do not carry directory lifecycle state.
+SigninLogs
+| where TimeGenerated > ago(30d)
+| join kind=inner (
+    IdentityInfo
+    | where AccountStatus != "Active"
+    | project UserPrincipalName = AccountUPN, AccountStatus
+  ) on UserPrincipalName
+| extend severity = iff(ResultType == 0, "CRITICAL", "HIGH")
+| project TimeGenerated, UserPrincipalName, AccountStatus,
+          success = iff(ResultType == 0, 1, 0), IPAddress, Location, severity
+| order by success desc

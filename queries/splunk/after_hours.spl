@@ -1,0 +1,11 @@
+``` [Auth] - After-Hours Login vs Personal Baseline — MITRE T1078
+    Login outside the user's own learned hour window (baseline min/max +/- 2h),
+    not a hardcoded 9-5. Stateful (per-user baseline) — a hunting query. Weak
+    on its own; value is corroboration. ```
+index=auth sourcetype=login_events success=1 earliest=-7d
+| eval hour=strftime(_time,"%H"), phase=if(_time<relative_time(now(),"-0d@d-7d"),"baseline","detect")
+| eventstats min(eval(if(phase="baseline",hour,null()))) AS min_h
+             max(eval(if(phase="baseline",hour,null()))) AS max_h BY username
+| where phase="detect" AND (hour<(min_h-2) OR hour>(max_h+2))
+| search NOT username="svc_*"
+| table _time, username, hour, min_h, max_h, src_ip

@@ -1,0 +1,9 @@
+// [Auth] - Failed Brute Force (single account, no success) — MITRE T1110.001
+// Many failures against one account from one source, no success that day.
+SigninLogs
+| where TimeGenerated > ago(7d)
+| summarize failures = countif(ResultType != 0),
+            successes = countif(ResultType == 0)
+        by username = UserPrincipalName, src_ip = IPAddress, day = bin(TimeGenerated, 1d)
+| where failures >= 10 and successes == 0
+| order by failures desc
