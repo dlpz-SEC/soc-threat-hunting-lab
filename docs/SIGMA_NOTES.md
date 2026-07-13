@@ -54,10 +54,12 @@ comment explaining the stateful step.
   must exit clean (0 errors). `scripts/validate_rules.py --strict` enforces the
   repo conventions (`[Auth] - ` titles, technique-level `attack.t####` tag,
   mandatory `falsepositives`, `custom:` block).
-- **Conversion is best-effort.** Backend support for Sigma **correlation**
-  rules is uneven across pySigma backends; a correlation that validates may not
-  convert cleanly to every target. We therefore gate CI on validation, not on
-  conversion output.
+- **Conversion is backend-gated — verified, not assumed.** Tested against
+  pySigma 1.1.0: the **splunk** backend (2.0.0) converts both correlation rules
+  (emits `| stats`/`| stats dc(...)` SPL); the **kusto** backend (1.0.1) raises
+  `NotImplementedError: Backend does not support correlation rules.` A
+  correlation that validates therefore does NOT convert to every target. We
+  gate CI on validation and treat conversion as capability-gated per backend.
 - **Known non-fatal `sigma check` issue.** This pySigma build's ATT&CK tag
   validator recognizes single-word tactic tags (`attack.persistence`) but flags
   the SigmaHQ-standard underscore form of multi-word tactics
@@ -68,7 +70,16 @@ comment explaining the stateful step.
 
 ## Relationship to the rest of the portfolio
 
-- Rule and CI conventions mirror **[dlpz-SEC/detection-as-code](https://github.com/dlpz-SEC/detection-as-code)**
-  (the `custom:` lifecycle block, tag scheme, validation gate).
-- The static IP enrichment mirrors **ADTE**'s offline intel table; see
-  `data/enrichment.sql` and the README severity-mapping section.
+- **These rules are upstreamed.** All three live on (or are staged for) a
+  branch of **[dlpz-SEC/detection-as-code](https://github.com/dlpz-SEC/detection-as-code)**
+  under the same rule UUIDs — the selection rule as a clean drop-in, the two
+  correlation rules together with the pipeline changes they require
+  (multi-document YAML parsing in the validator/lint/tests, a
+  capability-gated skip on the kusto convert leg, and exclusion of
+  aggregation SPL from the boolean mock harness). The lab copies remain the
+  reference implementation tested against `security.db`.
+- Rule and CI conventions mirror detection-as-code's `custom:` lifecycle
+  block, tag scheme, and validation gate.
+- The static IP enrichment mirrors **ADTE**'s offline intel table
+  (`data/enrichment.sql`); the triage output is scored through ADTE's actual
+  engine by `scripts/adte_bridge.py` → `docs/ADTE_HANDOFF.md`.

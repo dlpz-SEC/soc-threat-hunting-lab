@@ -1,0 +1,359 @@
+{
+  "E001": {
+    "lab": {
+      "severity": "HIGH",
+      "detections": [
+        "IMPOSSIBLE_TRAVEL",
+        "UNFAMILIAR_COUNTRY",
+        "AFTER_HOURS"
+      ],
+      "techniques": [
+        "T1078"
+      ]
+    },
+    "adte": {
+      "risk_score": 39,
+      "verdict": "medium_risk",
+      "display_severity": "Medium",
+      "confidence": 62,
+      "recommended_action": "Escalate to analyst for manual review within SLA",
+      "actions": [
+        "notify_soc_tier1",
+        "request_user_verification",
+        "create_ticket_p3"
+      ],
+      "rationale": [
+        {
+          "signal": "impossible_travel",
+          "score": 30.0,
+          "detail": "Impossible travel detected \u2014 203.45.67.89 -> 10.1.1.101: 11280 km in 648 min = 1044 km/h"
+        },
+        {
+          "signal": "mfa_fatigue",
+          "score": 0.0,
+          "detail": "MFA denial rate 0% (0/6) below fatigue threshold"
+        },
+        {
+          "signal": "ip_reputation",
+          "score": 0.0,
+          "detail": "No malicious IPs detected; 1 matched FP registry"
+        },
+        {
+          "signal": "device_novelty",
+          "score": 7.5,
+          "detail": "Sign-in events have no device IDs (unmanaged devices)"
+        },
+        {
+          "signal": "login_hour_anomaly",
+          "score": 1.7,
+          "detail": "1/6 events outside baseline hours (07:00\u201319:00 UTC)"
+        }
+      ]
+    }
+  },
+  "E004": {
+    "lab": {
+      "severity": "HIGH",
+      "detections": [
+        "BRUTE_FORCE",
+        "AFTER_HOURS"
+      ],
+      "techniques": [
+        "T1078",
+        "T1110.001"
+      ]
+    },
+    "adte": {
+      "risk_score": 52,
+      "verdict": "medium_risk",
+      "display_severity": "Medium",
+      "confidence": 75,
+      "recommended_action": "Escalate to analyst for manual review within SLA",
+      "actions": [
+        "notify_soc_tier1",
+        "request_user_verification",
+        "create_ticket_p3"
+      ],
+      "rationale": [
+        {
+          "signal": "impossible_travel",
+          "score": 0.0,
+          "detail": "Travel speed within normal range (0 km/h)"
+        },
+        {
+          "signal": "mfa_fatigue",
+          "score": 25.0,
+          "detail": "8 MFA denials in 10-min window (8/10 total denied) \u2014 followed by approval (fatigue capitulation likely)"
+        },
+        {
+          "signal": "ip_reputation",
+          "score": 20.0,
+          "detail": "1 malicious IP(s): 185.220.101.45 [tags: tor-exit]; 1 FP-suppressed"
+        },
+        {
+          "signal": "device_novelty",
+          "score": 7.5,
+          "detail": "Sign-in events have no device IDs (unmanaged devices)"
+        },
+        {
+          "signal": "login_hour_anomaly",
+          "score": 0.0,
+          "detail": "All 10 events within baseline hours (07:00\u201319:00 UTC)"
+        }
+      ]
+    }
+  },
+  "E007": {
+    "lab": {
+      "severity": "HIGH",
+      "detections": [
+        "IMPOSSIBLE_TRAVEL",
+        "UNFAMILIAR_COUNTRY",
+        "AFTER_HOURS"
+      ],
+      "techniques": [
+        "T1078"
+      ]
+    },
+    "adte": {
+      "risk_score": 38,
+      "verdict": "medium_risk",
+      "display_severity": "Medium",
+      "confidence": 70,
+      "recommended_action": "Escalate to analyst for manual review within SLA",
+      "actions": [
+        "notify_soc_tier1",
+        "request_user_verification",
+        "create_ticket_p3"
+      ],
+      "rationale": [
+        {
+          "signal": "impossible_travel",
+          "score": 30.0,
+          "detail": "Impossible travel detected \u2014 91.216.45.123 -> 10.1.1.107: 7783 km in 255 min = 1831 km/h"
+        },
+        {
+          "signal": "mfa_fatigue",
+          "score": 0.0,
+          "detail": "MFA denial rate 0% (0/4) below fatigue threshold"
+        },
+        {
+          "signal": "ip_reputation",
+          "score": 0.0,
+          "detail": "No malicious IPs detected; 1 matched FP registry"
+        },
+        {
+          "signal": "device_novelty",
+          "score": 7.5,
+          "detail": "Sign-in events have no device IDs (unmanaged devices)"
+        },
+        {
+          "signal": "login_hour_anomaly",
+          "score": 0.0,
+          "detail": "All 4 events within baseline hours (07:00\u201319:00 UTC)"
+        }
+      ]
+    }
+  },
+  "E011": {
+    "lab": {
+      "severity": "MEDIUM",
+      "detections": [
+        "AFTER_HOURS"
+      ],
+      "techniques": [
+        "T1078"
+      ]
+    },
+    "adte": {
+      "risk_score": 11,
+      "verdict": "low_risk",
+      "display_severity": "Low",
+      "confidence": 45,
+      "recommended_action": "Auto-close as benign \u2014 log for baseline update",
+      "actions": [
+        "auto_close_incident",
+        "update_baseline"
+      ],
+      "rationale": [
+        {
+          "signal": "impossible_travel",
+          "score": 0.0,
+          "detail": "Travel speed within normal range (0 km/h)"
+        },
+        {
+          "signal": "mfa_fatigue",
+          "score": 0.0,
+          "detail": "MFA denial rate 0% (0/3) below fatigue threshold"
+        },
+        {
+          "signal": "ip_reputation",
+          "score": 0.0,
+          "detail": "No malicious IPs detected; 1 matched FP registry"
+        },
+        {
+          "signal": "device_novelty",
+          "score": 7.5,
+          "detail": "Sign-in events have no device IDs (unmanaged devices)"
+        },
+        {
+          "signal": "login_hour_anomaly",
+          "score": 3.3,
+          "detail": "1/3 events outside baseline hours (07:00\u201319:00 UTC)"
+        }
+      ]
+    }
+  },
+  "E012": {
+    "lab": {
+      "severity": "MEDIUM",
+      "detections": [
+        "BRUTEFORCE_FAILED"
+      ],
+      "techniques": [
+        "T1110.001"
+      ]
+    },
+    "adte": {
+      "risk_score": 62,
+      "verdict": "medium_risk",
+      "display_severity": "Medium",
+      "confidence": 71,
+      "recommended_action": "Escalate to analyst for manual review within SLA",
+      "actions": [
+        "notify_soc_tier1",
+        "request_user_verification",
+        "create_ticket_p3"
+      ],
+      "rationale": [
+        {
+          "signal": "impossible_travel",
+          "score": 0.0,
+          "detail": "Travel speed within normal range (0 km/h)"
+        },
+        {
+          "signal": "mfa_fatigue",
+          "score": 25.0,
+          "detail": "25 MFA denials in 10-min window (25/27 total denied) \u2014 followed by approval (fatigue capitulation likely)"
+        },
+        {
+          "signal": "ip_reputation",
+          "score": 20.0,
+          "detail": "1 malicious IP(s): 45.33.32.156 [tags: scanner, brute-force]; 1 FP-suppressed"
+        },
+        {
+          "signal": "device_novelty",
+          "score": 7.5,
+          "detail": "Sign-in events have no device IDs (unmanaged devices)"
+        },
+        {
+          "signal": "login_hour_anomaly",
+          "score": 9.3,
+          "detail": "25/27 events outside baseline hours (07:00\u201319:00 UTC)"
+        }
+      ]
+    }
+  },
+  "E016": {
+    "lab": {
+      "severity": "HIGH",
+      "detections": [
+        "UNFAMILIAR_COUNTRY",
+        "INACTIVE_ACCOUNT",
+        "AFTER_HOURS"
+      ],
+      "techniques": [
+        "T1078",
+        "T1078.002"
+      ]
+    },
+    "adte": {
+      "risk_score": 48,
+      "verdict": "medium_risk",
+      "display_severity": "Medium",
+      "confidence": 70,
+      "recommended_action": "Escalate to analyst for manual review within SLA",
+      "actions": [
+        "notify_soc_tier1",
+        "request_user_verification",
+        "create_ticket_p3"
+      ],
+      "rationale": [
+        {
+          "signal": "impossible_travel",
+          "score": 30.0,
+          "detail": "Impossible travel detected \u2014 104.28.55.77 -> 95.213.45.67: 8546 km in 194 min = 2643 km/h"
+        },
+        {
+          "signal": "mfa_fatigue",
+          "score": 0.0,
+          "detail": "MFA denial rate 67% (2/3) below fatigue threshold"
+        },
+        {
+          "signal": "ip_reputation",
+          "score": 0.0,
+          "detail": "No malicious IPs detected"
+        },
+        {
+          "signal": "device_novelty",
+          "score": 7.5,
+          "detail": "Sign-in events have no device IDs (unmanaged devices)"
+        },
+        {
+          "signal": "login_hour_anomaly",
+          "score": 10.0,
+          "detail": "3/3 events outside baseline hours (07:00\u201319:00 UTC)"
+        }
+      ]
+    }
+  },
+  "E017": {
+    "lab": {
+      "severity": "MEDIUM",
+      "detections": [
+        "UNFAMILIAR_COUNTRY"
+      ],
+      "techniques": [
+        "T1078"
+      ]
+    },
+    "adte": {
+      "risk_score": 8,
+      "verdict": "low_risk",
+      "display_severity": "Low",
+      "confidence": 40,
+      "recommended_action": "Auto-close as benign \u2014 log for baseline update",
+      "actions": [
+        "auto_close_incident",
+        "update_baseline"
+      ],
+      "rationale": [
+        {
+          "signal": "impossible_travel",
+          "score": 0.0,
+          "detail": "Travel speed within normal range (0 km/h)"
+        },
+        {
+          "signal": "mfa_fatigue",
+          "score": 0.0,
+          "detail": "MFA denial rate 0% (0/2) below fatigue threshold"
+        },
+        {
+          "signal": "ip_reputation",
+          "score": 0.0,
+          "detail": "No malicious IPs detected; 1 matched FP registry"
+        },
+        {
+          "signal": "device_novelty",
+          "score": 7.5,
+          "detail": "Sign-in events have no device IDs (unmanaged devices)"
+        },
+        {
+          "signal": "login_hour_anomaly",
+          "score": 0.0,
+          "detail": "All 2 events within baseline hours (07:00\u201319:00 UTC)"
+        }
+      ]
+    }
+  }
+}

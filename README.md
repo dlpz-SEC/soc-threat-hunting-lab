@@ -45,7 +45,8 @@ Reproduce any table below with the query shown, e.g.
 pip install -r requirements.txt
 bash run_detection.sh                 # build + run + print triage queue
 python scripts/compute_metrics.py     # regenerate metrics/output docs
-pytest                                # 38 tests: per-rule logic + measured metrics
+pytest                                # 46 tests: per-rule logic, metrics, ADTE handoff
+python scripts/adte_bridge.py         # score findings through ADTE (offline)
 ```
 
 ---
@@ -241,6 +242,20 @@ mapping onto ADTE's `classify_verdict` bands:
 Where the lab emits one label per rule, ADTE stacks weighted signals into a
 single score — which is exactly the gap this lab makes visible.
 
+### The handoff, made concrete
+
+The mapping table above is not hypothetical: `scripts/adte_bridge.py` runs
+every user this lab flags through ADTE's actual engine, **fully offline**
+(static intel table, no API keys), and writes the comparison to
+[docs/ADTE_HANDOFF.md](docs/ADTE_HANDOFF.md). Highlights from the real run:
+the lab's deliberate benign FP (E017) scores 8/low_risk — the engine agrees
+with ground truth; E016's terminated-account takeover scores 48 with its
+`ip_reputation` at **zero** (the RU source is an offline-feed gap, visible in
+the numbers); and E012's *failed* brute force — MEDIUM in the lab — is ADTE's
+**top score (62)**, because signal density (scanner IP + failure burst + odd
+hour) outweighs single-rule impact. Manual flags in, deterministic scores and
+routing out: that is the workflow this lab exists to motivate.
+
 ---
 
 ## Phase 4: Data Integrity Validation
@@ -326,11 +341,12 @@ absolute figures.
 ├── sql/             detection_queries.sql (all views)
 ├── rules/auth/      3 Sigma rules (+ custom lifecycle blocks)
 ├── queries/         splunk/*.spl, kql/*.kql translations
-├── scripts/         build_db.py, compute_metrics.py, validate_rules.py
-├── tests/           pytest suite (38 tests)
+├── scripts/         build_db.py, compute_metrics.py, validate_rules.py,
+│                    adte_bridge.py (offline ADTE scoring handoff)
+├── tests/           pytest suite (46 tests)
 ├── docs/            METRICS.md, SIGMA_NOTES.md, SECURITY_REVIEW.md,
-│                    RESPONSE_PLAYBOOK.md, field_dictionary.md
-├── results/         DETECTION_OUTPUT.md (generated)
+│                    ADTE_HANDOFF.md, RESPONSE_PLAYBOOK.md, field_dictionary.md
+├── results/         DETECTION_OUTPUT.md, adte_handoff.json (generated)
 └── .github/workflows/detection-pipeline.yml
 ```
 
