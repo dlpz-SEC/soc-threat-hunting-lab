@@ -1,3 +1,9 @@
+# Secrets — never commit. ADTE integration work involves a .env holding live
+# AbuseIPDB/VirusTotal/OTX keys; keep it out of git by default.
+.env
+.env.*
+!.env.example
+
 # Generated artifacts
 data/security.db
 output/

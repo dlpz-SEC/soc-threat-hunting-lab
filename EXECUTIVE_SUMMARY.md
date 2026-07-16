@@ -1,6 +1,17 @@
 # SQL-Based Threat Hunting: Investigation Report
 
-**Analyst:** David Lopez | **Classification:** Internal Use
+**Analyst:** David Lopez | **Classification:** Internal Use *(simulated — see below)*
+
+> **Synthetic lab data. The IP addresses below are not IOCs.** This report is
+> written in the voice of a real investigation because that is the artifact
+> being demonstrated, but the dataset, the employees, and the incidents are all
+> fabricated ([data/setup_database.sql](data/setup_database.sql)). Some source
+> addresses are real, routable ranges chosen deliberately so the enrichment step
+> resolves against genuine infrastructure classes — `185.220.101.0/24` really is
+> Tor exit space, `45.33.32.0/24` really is hosting space — mirroring the offline
+> intel table in ADTE. **Do not treat any address here as a real indicator, and
+> do not action the "Block IPs" step against them.** No real network, employee,
+> or organization is represented.
 
 ---
 
